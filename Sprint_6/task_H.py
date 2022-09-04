@@ -2,44 +2,40 @@ import os
 import sys
 import time
 
-import networkx as nx
-import matplotlib.pyplot as plt
-
 sys.path.append(os.getcwd())
 from tools import test
 
-from itertools import groupby
+from bisect import insort
 
 
-def dfs(graph, start_point: int):
-    if not graph:
-        return [start_point]
-
+def dfs(cnt_vertexes, graph, start_point: int):
     stack = [start_point]
-    response = {}
-    time = 0
-    while stack:
-        v = graph[stack.pop()]
-        if v['color'] == 'white':
-            v['color'] = 'gray'
-            stack.append(v['key'])
-            response[v['key']] = {
-                'start': time,
-                'stop': None
-            }
 
-            for edge in v['edges'][::-1]:
-                w = graph[edge]
-                if w['color'] == 'white':
-                    stack.append(w['key'])
-        elif v['color'] == 'gray':
-            v['color'] = 'black'
-            response[v['key']]['stop'] = time
-            print(response[v['key']]['start'], response[v['key']]['stop'])
-        
+    time = 0
+    color = ['white'] * (cnt_vertexes + 1)
+    entry = [None] * (cnt_vertexes + 1)
+    leave = [None] * (cnt_vertexes + 1)
+
+    while stack:
+        v = stack.pop()
+        if color[v] == 'black':
+            continue
+
+        if color[v] == 'white':
+            color[v] = 'gray'
+            stack.append(v)
+            entry[v] = time
+
+            for w in graph[v][::-1]:
+                if color[w] == 'white':
+                    stack.append(w)
+        elif color[v] == 'gray':
+            color[v] = 'black'
+            leave[v] = time
+            
         time += 1
     
-    return response
+    return entry, leave
 
 
 def main():
@@ -48,26 +44,22 @@ def main():
     edges = []
     for _ in range(cnt_edges):
         from_, to_ = map(int, input().split())
-        edges.append([to_, from_])
         edges.append([from_, to_])
 
-    start_point = int(input())
-
-    graph = {
-        k: {
-            'key': k,
-            'edges': [v[1] for v in g]
-        } for k, g in groupby(sorted(edges), lambda e: e[0])
-    }
+    graph = {}
+    for start, end in edges:
+        if not graph.get(start):
+            graph[start] = [end]
+        else:
+            insort(graph[start], end)
 
     for i in range(1, cnt_vertexes+1):
         if graph.get(i) is None:
-            graph[i] = {
-                'key': i,
-                'edges': []
-            }
+            graph[i] = []
 
-    print(*dfs(graph, start_point))
+    entry, leave = dfs(cnt_vertexes, graph, 1)
+    for i in range(1, cnt_vertexes+1):
+        print(f"{entry[i]} {leave[i]}")
 
 
 tests = [
@@ -101,41 +93,33 @@ tests = [
 ]
 
 
-def visualedGraph(edges):
-    G = nx.Graph()
-    G.add_edges_from(edges)
-    nx.draw(G, with_labels=True, arrowstyle='-|>')    
-    plt.show()
-
-
 if __name__ == '__main__':
     for idx, row in enumerate(tests):
         start_t = time.time()
         cnt_vertexes, cnt_edges = map(int, row['test'][0].split(' '))
 
         edges = []
-        for row_ in row['test'][1:-1]:
+        for row_ in row['test'][1:]:
             from_, to_ = map(int, row_.split())
-            edges.append([to_, from_])
+            edges.append([from_, to_])
 
-        graph = {
-            k: {
-                'key': k,
-                'edges': [v[1] for v in g],
-                'color': 'white'
-            } for k, g in groupby(sorted(edges), lambda e: e[0])
-        }
+        graph = {}
+        for start, end in edges:
+            if not graph.get(start):
+                graph[start] = [end]
+            else:
+                insort(graph[start], end)
 
         for i in range(1, cnt_vertexes+1):
             if graph.get(i) is None:
-                graph[i] = {
-                    'key': i,
-                    'edges': [],
-                    'color': 'white'
-                }
+                graph[i] = []
 
-        response = dfs(graph, 1)
-        [print(response[i]) for i in response]
+        entry, leave = dfs(cnt_vertexes, graph, 1)
+        response = []
+        for i in range(1, cnt_vertexes+1):
+            response.append(f"{entry[i]} {leave[i]}")
+
+        [print(i) for i in response]
         stop_t = time.time()
 
         test(None, idx, row['answer'], None, response, start_t, stop_t)
