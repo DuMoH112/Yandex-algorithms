@@ -20,12 +20,11 @@ def bfs(graph, start_point: int):
     while q:
         v = q.popleft()
         response.append(v)
-        print(str(v) + " ", end="")
         for w in graph[v]:
             if w not in visited:
                 q.append(w)
                 visited.add(w)
-    
+
     return response
 
 
@@ -48,7 +47,7 @@ def main():
         if graph.get(i) is None:
             graph[i] = []
 
-    bfs(graph, start_point)
+    print(*bfs(graph, start_point))
 
 
 tests = [
