@@ -1,123 +1,88 @@
-# 69829861
+# 70329555
 
 """
 -- ПРИНЦИП РАБОТЫ --
-    1.  Формируем из всего массива бинарную кучу.
-        Для этого проходим справа-налево элементы (от последних к первым) и если у элемента есть потомки,
-        то для него делаем просейку.
+    1. Из входных данных составляем неориентированный взвешенный граф.
+       При формировании графа веса сохраняются с отрицательным префиксом, что позволит дальше
+       в куче хранить максимальное значение в начале списка
+
+    2. Составление максимального остового дерева происходит при помощи Алгоритм Прима с использованием кучи.
+       Для формирования кучи используется библиотека - heapq
+
+    2.1. Функция add_vertex служит для добавления вершины в остов, с проверкой исходящех рёбер данной вершины
+         на отсутствие данных вершин ребра во множестве вершин добавленных в остов.
     
-    2.  Максимумы ставим в конец неотсортированной части массива.
-        Так как данные в массиве после первого этапа представляют из себя бинарную кучу,
-        максимальный элемент находится на первом месте в массиве.
-        Первый элемент (он же максимум) меняем с последним элементом неотсортированной части массива местами.
-        После этого обмена максимум оказался своём окончательном месте, т.е. максимальный элемент отсортирован.
-        Неотсортированная часть массива перестала быть бинарной кучей, но это исправляется однократной просейкой вниз —
-        в результате чего на первом месте массива оказывается предыдущий по величине максимальный элемент.
-        Действия этого этапа снова повторяются для оставшейся неупорядоченной области,
-        до тех пор пока максимумы поочерёдно не будут перемещены на свои окончательные позиции.
+    2.2. Функция expensive_network - это функция поиска максимального остового дерева. На вход подаётся граф
+         и начиная с первой вершины начиается обход. Далее пробегаемся циклом, пока длина множества added
+         не равна значению вершин в графе и массив (куча) существуют (имеет элементы),
+         берем "минимальный" (максимальный) элемент из кучи edges. Проверяем, что вершины этого ребра
+         нет во множестве вершин, добавленных в остов и, в таком случае, к значению максимального остовного дерева
+         max_spanning_tree прибавляем вес максимального ребра, как раз того, что мы
+         забарали из кучи. После чего вызваем функцию add_vertex() для добавления данной вершины в остов.
+         Когда цикл завершится, необходимо проверить, что длина множества added равно количеству вершин графа.
+         В этом случае вернем значение max_spanning_tree, что и будет передавать значение максимального остовного дерева.
+        
+         В противном случае, если в графе несколько компонент связности, выведем сообщение: 'Oops! I did it again'.
 
 -- ВРЕМЕННАЯ СЛОЖНОСТЬ --
-    Сложности по времени зависит от просейки. Однократная просейка обходится в O(log(n)).
-
-    1. Сначала для n элементов делаем просейку, чтобы из массива построить первоначальную кучу — O(nlog(n)).
-    2. Далее, при вынесении n текущих максимумов из кучи, делаем однократную просейку
-    для оставшейся неотсортированной части, этап также стоит O(nlog(n)).
-    
-    Итоговая сложность по времени: O(nlog(n)) + O(nlog(n)) = O(nlog(n)).
-
-    При этом у пирамидальной сортировки нет ни вырожденных ни лучших случаев.
-    Любой массив будет обработан на приличной скорости, но при этом не будет ни деградации ни рекордов.
+    O(E*logV), где E - количество рёбер в графе, а V - количество вершин.
 
 -- ПРОСТРАНСТВЕННАЯ СЛОЖНОСТЬ --
-    Сложность по дополнительной памяти O(1).
-    Сложность основной памяти O(n) для n элементов.
+    O(n)   - Хранение кучи.
+    O(E*V) - Список смежности где E - количество вершин, V - количество рёбер.
 """
 
 
-class User:
-    def __init__(self, name: str = None, solved_tasks: int = 0, fine: int = 0):
-        self.name = name
-        self.tasks = int(solved_tasks)
-        self.fine = int(fine)
+from typing import List, Dict, Tuple
+import heapq
 
-    def __gt__(self, other) -> bool:
-        if self.tasks == other.tasks:
-            if self.fine == other.fine:
-                return self.name < other.name
-            return self.fine < other.fine
-        return self.tasks > other.tasks
-
-    def __lt__(self, other) -> bool:
-        if self.tasks == other.tasks:
-            if self.fine == other.fine:
-                return self.name > other.name
-            return self.fine > other.fine
-        return self.tasks < other.tasks
-
-    def __str__(self):
-        return self.name
+type_edges = List[Tuple[int, int]]
 
 
-class BinaryHeap:
-    def __init__(self):
-        self.heap = [None]
-        self.size = 0
+class Graph:
+    def __init__(self, cnt_vertexes: int):
+        self.graph: Dict[int, type_edges] = {
+            i: [] for i in range(1, cnt_vertexes+1)
+        }
+        self.size: int = cnt_vertexes
 
-    def add(self, key: User) -> None:
-        self.size += 1
-        self.heap.append(key)
-        self.sift_up(self.size)
+    def __getitem__(self, vertex: int) -> type_edges:
+        return self.graph.get(vertex, [])
 
-    def pop(self) -> User:
-        result = self.heap[1]
-        self.heap[1] = self.heap[self.size]
-        self.size -= 1
-        self.sift_down(1)
-        return result
-
-    def sift_up(self, index: int) -> None:
-        if index == 1:
-            return
-        parent_index = index // 2
-
-        if self.heap[parent_index] < self.heap[index]:
-            self.heap[index], self.heap[parent_index] = self.heap[parent_index], self.heap[index]
-            self.sift_up(parent_index)
-
-    def sift_down(self, index: int) -> int:
-        left = 2 * index
-        right = 2 * index + 1
-
-        if self.size < left:
-            return
-
-        if (right <= self.size) and (self.heap[left] < self.heap[right]):
-            index_largest = right
-        else:
-            index_largest = left
-
-        if self.heap[index] < self.heap[index_largest]:
-            self.heap[index], self.heap[index_largest] = self.heap[index_largest], self.heap[index]
-            self.sift_down(index_largest)
-
-    def __str__(self) -> str:
-        return "\n".join(str(i) for i in self.heap[1:])
+    def add_edge(self, start: int, end: int, weight: int):
+        self.graph[start].append((-weight, end))
+        self.graph[end].append((-weight, start))
 
 
-def heapsort(heap: BinaryHeap):
-    sorted_array = []
-    while heap.size > 0:
-        sorted_array.append(str(heap.pop()))
-        print(sorted_array[-1])
-    
-    return sorted_array
+def add_vertex(vertex: int, graph_edges: type_edges, added: List[bool], edges: List[type_edges]):
+    added[vertex] = True
+
+    for weight, end in graph_edges:
+        if not added[end]:
+            heapq.heappush(edges, (weight, end))
+
+
+def expensive_network(graph: Graph):
+    max_spanning_tree = 0
+    added = [False] * (graph.size + 1)
+    edges = []
+
+    added[0] = True
+    add_vertex(1, graph[1], added, edges)
+    while not all(added) and edges:
+        weight, end = heapq.heappop(edges)
+        if not added[end]:
+            max_spanning_tree += abs(weight)
+            add_vertex(end, graph[end], added, edges)
+
+    return 'Oops! I did it again' if not all(added) else max_spanning_tree
 
 
 if __name__ == '__main__':
-    cnt_users = int(input())
-    heap = BinaryHeap()
+    cnt_vertexes, cnt_edges = map(int, input().split(' '))
 
-    for _ in range(cnt_users):
-        heap.add(User(*input().split(' ')))
-    
-    heapsort(heap)
+    graph = Graph(cnt_vertexes)
+    for _ in range(cnt_edges):
+        graph.add_edge(*map(int, input().split()))
+
+    print(expensive_network(graph))

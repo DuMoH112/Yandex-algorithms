@@ -1,49 +1,60 @@
 import os
 import sys
-import time
 
-from final_task_A import heapsort, User, BinaryHeap
+from final_task_A import expensive_network, Graph
 
 sys.path.append(os.getcwd())
 from tools import test
 
 praktikum_tests = [
     {"test": [
-        "5",
-        "alla 4 100",
-        "gena 6 1000",
-        "gosha 2 90",
-        "rita 2 90",
-        "timofey 4 80",
-    ], "answer": [
-        "gena",
-        "timofey",
-        "alla",
-        "gosha",
-        "rita",
-    ]},
+        "4 4",
+        "1 2 5",
+        "1 3 6",
+        "2 4 8",
+        "3 4 3",
+    ], "answer": 19},
     {"test": [
-        "5",
-        "alla 0 0",
-        "gena 0 0",
-        "gosha 0 0",
-        "rita 0 0",
-        "timofey 0 0",
-    ], "answer": [
-        "alla",
-        "gena",
-        "gosha",
-        "rita",
-        "timofey",
-    ]},
+        "3 3",
+        "1 2 1",
+        "1 2 2",
+        "2 3 1",
+    ], "answer": 3},
+    {"test": [
+        "2 0",
+    ], "answer": "Oops! I did it again"},
+    {"test": [
+        "1 0",
+    ], "answer": 0},
+    {"test": [
+        "12 17",
+        "1 2 5",
+        "1 12 1",
+        "12 11 9",
+        "2 11 7",
+        "2 3 8",
+        "11 4 6",
+        "3 4 3",
+        "3 5 13",
+        "4 10 6",
+        "4 5 2",
+        "5 10 10",
+        "5 6 12",
+        "6 7 13",
+        "7 10 8",
+        "7 8 16",
+        "8 9 1",
+        "9 10 5",
+    ], "answer": 104},
 ]
 
 
 if __name__ == '__main__':
     for idx, row_t in enumerate(praktikum_tests):
-        cnt_users = int(row_t['test'][0])
-        heap = BinaryHeap()
-        for row in row_t['test'][1:]:
-            heap.add(User(*row.split(' ')))
+        cnt_vertexes, cnt_edges = map(int, row_t['test'][0].split(' '))
 
-        test(heapsort, idx, row_t['answer'], [heap])
+        graph = Graph(cnt_vertexes)
+        for row in row_t['test'][1:]:
+            graph.add_edge(*map(int, row.split()))
+
+        test(expensive_network, idx, row_t['answer'], [graph])
