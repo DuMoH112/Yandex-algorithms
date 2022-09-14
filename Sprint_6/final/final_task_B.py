@@ -1,68 +1,90 @@
-# 69718799
+# 70437407
 
 """
 -- ПРИНЦИП РАБОТЫ --
-    Идея удаления элемента делится на несколько случаев:
-            1) у узла нет дочерних узлов;
-            2) у узла есть левый дочерних узлов;
-            3) у узла есть правый дочерних узлов;
-            4) у узла есть оба ребёнка.
-        В случае 1 просто удаляем узел, дополнительная работа не требуется.
-        В случае 2 и 3 заменяем удаляемый узел на его потомка, на этом удаление заканчивается.
-        В случае 4 находим в правом поддереве минимальный элемент и перемещаем его на место удаляемого узла.
-
-    Идею удаления взял из этой статьи - https://tproger.ru/articles/dvoichnoe-binarnoe-derevo-udalenie-jelementa-i-skorost-raboty/
+    1. Из входных данных составляем ориентированный граф с учётом условия,
+       где между вершинами существует разные типы дорог:
+            HIGHWAY = 'B'
+            ROAD = 'R'
+    
+    2. Для каждой вершины запускаем обход DFS, если граф имеет цикл, значит путь неоптимальный.
+       За обход отвечает функция is_cyclic. 
+    
+    2.1. Формируется список цветов для каждой вершины, где:
+            WHITE - вершина не посещена
+            GRAY - вершина посещена, но не до конца обработана
+            BLACK - вершина посещена и обработана
+    
+    Таким образом, если в процессе обхода графа мы наткнемся на серую вершину, то это означает, что в графе есть цикл.
+    Это означает, что существует пара вершин, между которыми есть маршрут с разным типом дорог и
+    карта железных дорог в этом случае является не оптимальной.
 
 -- ВРЕМЕННАЯ СЛОЖНОСТЬ --
-    Наихудшая временная сложность операции удаления - O(h), где h - высота дерева.
-    В худшем случае нам, возможно, придется путешествовать от корня к самому глубокому узлу.
-    Высота перекошенного дерева может стать n, а временная сложность операции удаления - O(n).
+    O(V+E) - DFS.
 
 -- ПРОСТРАНСТВЕННАЯ СЛОЖНОСТЬ --
-    Этот алгоритм использует O(h) дополнительной памяти, где h - высота дерева. 
+    O(E*V) - Список смежности где E - количество вершин, V - количество рёбер.
 """
 
-
-class Node:
-    def __init__(self, left=None, right=None, value=0):
-        self.right = right
-        self.left = left
-        self.value = value
+from typing import List
 
 
-class BinaryTree:
-    def __init__(self, root: Node):
-        self.root = root
+class UnknownRoadException(Exception):
+    def __init__(self):
+        pass
 
-    def remove(self, value: int) -> Node:
-        if not self.root:
-            return self.root
-        
-        return self._delete_node(self.root, value)
 
-    def _delete_node(self, node: Node, value: int) -> Node:
-        if node.value == value:
-            if node.right and node.left:
-                min_node = self._find_min_elem(node.right)
-                node.value = min_node.value
+class RoadsType:
+    HIGHWAY = 'B'
+    ROAD = 'R'
 
-                node.right = self._delete_node(node.right, min_node.value)
 
-            elif node.left:
-                return node.left
+class Color:
+    WHITE = 0
+    GRAY = 1
+    BLACK = 2
+
+
+def is_cyclic(graph, start_point: int, colors: List[Color]):
+    stack = [start_point]
+
+    while stack:
+        v = stack.pop()
+        if colors[v] == Color.WHITE:
+            colors[v] = Color.GRAY
+            stack.append(v)
+
+            for w in graph[v]:
+                if colors[w] == Color.WHITE:
+                    stack.append(w)
+                elif colors[w] == Color.GRAY:
+                    return True
+        elif colors[v] == Color.GRAY:
+            colors[v] = Color.BLACK
+
+    return False
+
+
+def railroad(cnt_cities: int, graph):
+    colors = [Color.WHITE for _ in range(cnt_cities)]
+    for start_point in range(cnt_cities):
+        if is_cyclic(graph, start_point, colors):
+            return True
+    return False
+
+
+if __name__ == '__main__':
+    cnt_cities = int(input())
+
+    graph = {v: [] for v in range(cnt_cities)}
+
+    for i in range(cnt_cities-1):
+        for j, type_road in enumerate(input().rstrip()):
+            if type_road == RoadsType.HIGHWAY:
+                graph[i].append(i+j+1)
+            elif type_road == RoadsType.ROAD:
+                graph[i+j+1].append(i)
             else:
-                return node.right
-        else:
-            if node.value > value and node.left:
-                node.left = self._delete_node(node.left, value)
-            elif node.right:
-                node.right = self._delete_node(node.right, value)
-        
-        return node
+                raise UnknownRoadException
 
-    def _find_min_elem(self, root: Node) -> Node:
-        return self._find_min_elem(root.left) if root.left else root
-
-
-def remove(root: Node, key: int):
-    return BinaryTree(root).remove(key)
+    print("NO" if railroad(cnt_cities, graph) else "YES")

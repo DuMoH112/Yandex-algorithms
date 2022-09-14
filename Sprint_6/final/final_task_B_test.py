@@ -1,52 +1,60 @@
-from final_task_B import remove, Node
+import os
+import sys
+
+from final_task_B import railroad, RoadsType, UnknownRoadException
+
+sys.path.append(os.getcwd())
+from tools import test
+
+praktikum_tests = [
+    {"test": [
+        "3",
+        "RB",
+        "R",
+    ], "answer": "NO"},
+    {"test": [
+        "4",
+        "BBB",
+        "RB",
+        "B",
+    ], "answer": "YES"},
+    {"test": [
+        "5",
+        "RRRB",
+        "BRR",
+        "BR",
+        "R",
+    ], "answer": "NO"},
+    {"test": [
+        "10",
+        "RRBRRBRRR",
+        "BBBBBBRB",
+        "BBRBRRR",
+        "RRBRRR",
+        "RBRRR",
+        "BBRR",
+        "RRR",
+        "RR",
+        "B",
+    ], "answer": "YES"}
+]
 
 
-def tests():
-    test1()
-    test2()
+if __name__ == '__main__':
+    for idx, row_t in enumerate(praktikum_tests):
+        cnt_cities = int(row_t['test'][0])
 
+        graph = {v: [] for v in range(cnt_cities)}
 
-def test1():
-    node1 = Node(None, None, 2)
-    node2 = Node(node1, None, 3)
-    node3 = Node(None, node2, 1)
-    node4 = Node(None, None, 6)
-    node5 = Node(node4, None, 8)
-    node6 = Node(node5, None, 10)
-    root = Node(node3, node6, 5)
-    newHead = remove(root, 10)
-    assert newHead.value == 5
-    assert newHead.right is node5
-    assert newHead.right.value == 8
-    print("Test 1 is \033[92mOK\033[0m")
-    #             5
-    #       1           10
-    #    -    3        8   -
-    #       2   -    6   -
+        for i, row in enumerate(row_t['test'][1:]):
+            for j, type_road in enumerate(row.rstrip()):
+                if type_road == RoadsType.HIGHWAY:
+                    graph[i].append(i+j+1)
+                elif type_road == RoadsType.ROAD:
+                    graph[i+j+1].append(i)
+                else:
+                    raise UnknownRoadException
 
-
-def test2():
-    node10 = Node(None, None, 99)
-    node9 = Node(None, None, 72)
-    node8 = Node(node9, node10, 91)
-    node7 = Node(None, None, 50)
-    node6 = Node(None, None, 32)
-    node5 = Node(None, node6, 29)
-    node4 = Node(None, None, 11)
-    node3 = Node(node7, node8, 65)
-    node2 = Node(node4, node5, 20)
-    root = Node(node2, node3, 41)
-    newHead = remove(root, 41)
-    assert newHead.value == 50
-    assert newHead.right is node3
-    assert newHead.right.value == 65
-    print("Test 2 is \033[92mOK\033[0m")
-    #             41
-    #       20           65
-    #    11    29      50   91
-    #         -  32       72  99
-
-
-tests()
-
-    
+        response = railroad(cnt_cities, graph)
+        print("NO" if response else "YES")
+        test(None, idx, row_t['answer'], None, "NO" if response else "YES")
