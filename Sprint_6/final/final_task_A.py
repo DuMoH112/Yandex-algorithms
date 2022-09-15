@@ -1,4 +1,4 @@
-# 70329555
+# 70468103
 
 """
 -- ПРИНЦИП РАБОТЫ --
@@ -33,7 +33,7 @@
 """
 
 
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 import heapq
 
 type_edges = List[Tuple[int, int]]
@@ -41,17 +41,15 @@ type_edges = List[Tuple[int, int]]
 
 class Graph:
     def __init__(self, cnt_vertexes: int):
-        self.graph: Dict[int, type_edges] = {
-            i: [] for i in range(1, cnt_vertexes+1)
-        }
+        self.graph: type_edges = [[] for i in range(cnt_vertexes)]
         self.size: int = cnt_vertexes
 
     def __getitem__(self, vertex: int) -> type_edges:
-        return self.graph.get(vertex, [])
+        return self.graph[vertex-1]
 
     def add_edge(self, start: int, end: int, weight: int):
-        self.graph[start].append((-weight, end))
-        self.graph[end].append((-weight, start))
+        self.graph[start-1].append((-weight, end))
+        self.graph[end-1].append((-weight, start))
 
 
 def add_vertex(vertex: int, graph_edges: type_edges, added: List[bool], edges: List[type_edges]):
