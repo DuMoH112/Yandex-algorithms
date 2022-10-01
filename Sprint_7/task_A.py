@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 
 sys.path.append(os.getcwd())
 from tools import test
