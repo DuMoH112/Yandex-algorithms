@@ -1,7 +1,8 @@
+from typing import List
 from time import time
 
 
-def test(func, idx: int, answer: any, arguments: [], response=None, start_t=0, end_t=0):
+def test(func, idx: int, answer: any, arguments: List, response: any = None, start_t: float = 0, end_t: float = 0):
     if not response:
         start_t = time()
         response = func(*arguments)
