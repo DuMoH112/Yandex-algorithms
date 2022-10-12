@@ -1,4 +1,4 @@
-# 71792573
+# 71893655
 
 """
 -- ПРИНЦИП РАБОТЫ --
@@ -14,9 +14,6 @@
 -- ПРОСТРАНСТВЕННАЯ СЛОЖНОСТЬ --
     O(n*m), где n - количество строк, m - длина самой большой строки.
 """
-
-from typing import List
-
 
 def unpack(zip_str: str):
     if not zip_str:
@@ -42,16 +39,17 @@ def unpack(zip_str: str):
     return ''.join(result)
 
 
-def max_prefix(rows: List[str]):
-    prefix = rows[0]
-    for string in rows[1:]:
-        while string[:len(prefix)] != prefix and prefix:
-            prefix = prefix[:-1]
+def max_prefix(prefix: str, string: str):
+    while string[:len(prefix)] != prefix and prefix:
+        prefix = prefix[:-1]
 
     return prefix
 
 
 if __name__ == '__main__':
     cnt_str = int(input())
-    rows = [unpack(input()) for _ in range(cnt_str)]
-    print(max_prefix(rows))
+    prefix = unpack(input())
+    for _ in range(cnt_str-1):
+        prefix = max_prefix(prefix, unpack(input()))
+        
+    print(prefix)
